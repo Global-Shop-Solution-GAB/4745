@@ -1,0 +1,387 @@
+Program.Sub.ScreenSU.Start
+Gui.Form..Create
+Gui.Form..Size(20385,14145)
+Gui.Form..MinX(0)
+Gui.Form..MinY(0)
+Gui.Form..Position(0,0)
+Gui.Form..BackColor(-2147483633)
+Gui.Form..MousePointer(0)
+Gui.Form..Event(UnLoad,Form_UnLoad)
+Gui.Form..Caption("Print/EmailQuote")
+Gui.Form.lblSelectQuote.Create(Label,"Select Quote",True,1215,255,0,360,180,True,0,"Arial",8,-2147483633,0)
+Gui.Form.ddlQuote.Create(DropDownList)
+Gui.Form.ddlQuote.Size(5130,330)
+Gui.Form.ddlQuote.Position(360,420)
+Gui.Form.cmdPrint.Create(Button)
+Gui.Form.cmdPrint.Size(855,375)
+Gui.Form.cmdPrint.Position(360,945)
+Gui.Form.cmdPrint.Caption("Print")
+Gui.Form.cmdPrint.Event(Click,cmdPrint_Click)
+Gui.Form.lbAddress.Create(Label,"Email Address",True,1425,255,0,360,1740,True,0,"Arial",8,-2147483633,0)
+Gui.Form.txtAddress.Create(TextBox,"",True,18705,300,0,360,1980,True,0,"Arial",8,-2147483643,1)
+Gui.Form.lblSubject.Create(Label,"Subject",True,840,255,0,360,2430,True,0,"Arial",8,-2147483633,0)
+Gui.Form.txtSubject.Create(TextBox,"",True,19500,300,0,360,2670,True,0,"Arial",8,-2147483643,1)
+Gui.Form.txtBody.Create(TextBoxR)
+Gui.Form.txtBody.Size(19500,9510)
+Gui.Form.txtBody.Position(360,3105)
+Gui.Form.cmdClearBody.Create(Button)
+Gui.Form.cmdClearBody.Size(855,315)
+Gui.Form.cmdClearBody.Position(360,12675)
+Gui.Form.cmdClearBody.Caption("Clear")
+Gui.Form.cmdClearBody.Event(Click,cmdClearBody_Click)
+Gui.Form.cmdEmail.Create(Button)
+Gui.Form.cmdEmail.Size(855,375)
+Gui.Form.cmdEmail.Position(360,13230)
+Gui.Form.cmdEmail.Caption("Email")
+Gui.Form.cmdEmail.Event(Click,cmdEmail_Click)
+Gui.Form.cmdEmpBrowser.Create(Button)
+Gui.Form.cmdEmpBrowser.Size(315,315)
+Gui.Form.cmdEmpBrowser.Position(19155,1965)
+Gui.Form.cmdEmpBrowser.Caption("^")
+Gui.Form.cmdEmpBrowser.Event(Click,cmdEmpBrowser_Click)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+v.Global..BulkDeclareString(sLabelQuote,sQuote,sSelectedReport,sValue,sParmeters)
+v.Global..BulkDeclareLong(iRunID,iReportID,iLogID)
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'BN Oct 20,2017
+'This project will add a custom button "Print/Email" in the Estimating / Routing & Quote Management > File > Quick Quote > Open/New.
+'With the Quote Approval System is on, we still can Print/Email Quote even if the Quote is not Approved yet.
+
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+v.Local..BulkDeclareString(sError)
+
+F.ODBC.Connection!Conx.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+
+F.Intrinsic.Control.SelectCase(V.Caller.Hook)
+	'Change Quote Number hook (Estimating / Routing & Quote Management > File > Quick Quote > Open/New)
+	F.Intrinsic.Control.Case(10721)	
+	
+		f.Intrinsic.Control.If(v.Passed.000074,<>,"A")
+			f.Intrinsic.Variable.SetProperty("GAB-BTN-4","PL",254)
+			F.Intrinsic.Variable.SetProperty("GAB-BTN-4","PT",592)		
+			f.Intrinsic.UI.ChangeCallerProperty(v.Passed.GAB-BTN-4,"HIDE",0)
+			F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-BTN-4,"LOCK",0)		
+			V.Passed.GAB-BTN-4.Set("Print/Email")
+		f.Intrinsic.Control.Else
+			f.Intrinsic.UI.ChangeCallerProperty(v.Passed.GAB-BTN-4,"HIDE",1)
+			F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-BTN-4,"LOCK",1)
+		f.Intrinsic.Control.EndIf	
+
+	'Custom GAB Hook
+	F.Intrinsic.Control.Case(10990)
+		'Check folder for saving attachment (Files\Quotes)
+		
+		
+		f.Intrinsic.String.LPad(v.Passed.000003,"0",7,v.Global.sQuote)	
+		Gui.Form.ddlQuote.AddItem("Q ND     Detailed - No Discount")
+		Gui.Form.ddlQuote.AddItem("Q NPN    Detailed - No Discount - NO Part Number")
+		Gui.Form.ddlQuote.AddItem("Q NT     Summary - No Total")
+		Gui.Form.ddlQuote.AddItem("Q S_WT   Summary - With Total")
+		Gui.Form.ddlQuote.AddItem("Q D_Dez  Detailed - Dezurik")
+		Gui.Form.ddlQuote.AddItem("Q D_Dez2 Detailed - No Discount - NO Part Number - Dezurik")
+		Gui.Form.ddlQuote.AddItem("Q S_Dez  Summary - Dezurik")	
+			
+		Gui.Form.ddlQuote.AddItem("B NP     Detailed - No Discount")
+		Gui.Form.ddlQuote.AddItem("B NPN    Detailed - No Discount - NO Part Number")
+		Gui.Form.ddlQuote.AddItem("B S_NT   Summary - No Total")
+		Gui.Form.ddlQuote.AddItem("B S_WT   Summary - With Total")
+		Gui.Form.ddlQuote.AddItem("B D_Dez  Detailed - Dezurik")
+		Gui.Form.ddlQuote.AddItem("B D_Dez2 Detailed - No Discount - NO Part Number - Dezurik")
+		Gui.Form.ddlQuote.AddItem("B S_Dez  Summary - Dezurik")
+		gui.Form.ddlQuote.ListIndex(0)
+		f.Intrinsic.String.LPad(v.Passed.000003,"0",7,v.Global.sLabelQuote)
+		f.Intrinsic.String.Build("Quote: {0} - Customer: {1}",v.Global.sLabelQuote,v.Passed.000006,v.Global.sLabelQuote)
+		gui.Form..Caption(v.Global.sLabelQuote)
+		gui.Form.txtSubject.Text(v.Global.sLabelQuote)
+		gui.Form.cmdPrint.SetFocus
+		gui.Form..Show		
+F.Intrinsic.Control.EndSelect
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4745_Print_Email_QTE.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Main.End
+
+Program.Sub.Form_UnLoad.Start
+F.Intrinsic.Control.SetErrorHandler("cmdPrint_Click_Err")
+F.Intrinsic.Control.ClearErrors
+V.Local.sError.Declare(String)
+
+f.ODBC.Connection!Conx.Close
+f.Intrinsic.Control.End
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("cmdPrint_Click_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4745_Print_Email_QTE.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Form_UnLoad.End
+
+Program.Sub.cmdClearBody_Click.Start
+gui.Form.txtBody.Text("")
+gui.Form.txtBody.SetFocus
+Program.Sub.cmdClearBody_Click.End
+
+Program.Sub.cmdPrint_Click.Start
+F.Intrinsic.Control.SetErrorHandler("cmdPrint_Click_Err")
+F.Intrinsic.Control.ClearErrors
+v.Local..BulkDeclareString(sError,sHold)
+
+gui.Form..Visible(False)
+
+f.Intrinsic.String.Build("Printing {0} - Form: ",v.Global.sLabelQuote,v.Screen.Form!ddlQuote.Text,v.Local.sHold)
+f.Intrinsic.UI.InvokeWaitDialog(v.Local.sHold)
+	f.Intrinsic.Control.CallSub(log_report)
+f.Intrinsic.UI.CloseWaitDialog
+
+F.Global.BI.RunReportPreProcessor(V.Global.iRunID,V.Global.iLogID,V.Global.sParmeters,V.Global.sValue,V.Global.iReportID,16,true,"",-1,"",-1,"","",V.Global.iLogID)
+
+f.Intrinsic.Control.CallSub(form_unload)
+
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("cmdPrint_Click_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4745_Print_Email_QTE.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.cmdPrint_Click.End
+
+Program.Sub.cmdEmail_Click.Start
+F.Intrinsic.Control.SetErrorHandler("cmdEmail_Click_Err")
+F.Intrinsic.Control.ClearErrors
+v.Local..BulkDeclareString(sError,sHold,sEmailList,sEmailListCheck, sOneEmail,sRearOneEmail,sAttach,sDate,sTime,sSenderEmailSenderName,sReceipients,sattachname,sAttach2)
+v.Local..BulkDeclareLong(iOccurs,iCnt,iUserID)
+
+
+'Check email address
+'if email is not good, show back the form, exitSub
+f.Intrinsic.Control.If(v.Screen.Form!txtAddress.Text.Trim,=,"")
+	f.Intrinsic.UI.Msgbox("Please input email addresses","Empty Email Address")
+	f.Intrinsic.UI.CloseWaitDialog
+	f.Intrinsic.Control.ExitSub
+f.Intrinsic.Control.EndIf
+
+f.Intrinsic.String.Replace(v.Screen.Form!txtAddress.Text.Trim,",",";",v.Local.sEmailList)
+
+f.Intrinsic.String.Split(v.Local.sEmailList,";",v.Local.sEmailListCheck)	
+f.Intrinsic.Control.For(v.Local.iCnt,0,v.Local.sEmailListCheck.UBound,1)
+	F.Intrinsic.String.Occurs(v.Local.sEmailListCheck(v.Local.iCnt),"@",V.Local.iOccurs)
+	f.Intrinsic.Control.If(v.Local.iOccurs,<>,1)
+		f.Intrinsic.UI.Msgbox(v.Local.sEmailListCheck(v.Local.iCnt),"No @ sign")	
+		f.Intrinsic.UI.CloseWaitDialog
+		f.Intrinsic.Control.ExitSub
+	f.Intrinsic.Control.Else	
+		f.Intrinsic.String.Split(v.Local.sEmailListCheck(v.Local.iCnt),"@",v.Local.sOneEmail)
+		f.Intrinsic.Control.If(v.Local.sOneEmail(1),=,"")
+			f.Intrinsic.UI.Msgbox(v.Local.sEmailListCheck(v.Local.iCnt),"No domain")
+			f.Intrinsic.UI.CloseWaitDialog
+			f.Intrinsic.Control.ExitSub
+		f.Intrinsic.Control.Else
+			f.Intrinsic.String.Split(v.Local.sOneEmail(1),".",v.Local.sRearOneEmail)
+			f.Intrinsic.Control.If(v.Local.sRearOneEmail.UBound,<,1)
+				f.Intrinsic.UI.Msgbox(v.Local.sEmailListCheck(v.Local.iCnt),"Invalid domain")
+				f.Intrinsic.UI.CloseWaitDialog
+				f.Intrinsic.Control.ExitSub
+			f.Intrinsic.Control.EndIf
+		f.Intrinsic.Control.EndIf
+	f.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.If(v.Local.sReceipients.Trim, !=, "")
+		F.Intrinsic.String.Build("{0}@!@{2}*!*{1}",v.Local.sReceipients, v.Local.sEmailListCheck(v.Local.iCnt).trim, v.Local.sOneEmail(0).trim,v.Local.sReceipients)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.String.Build("{1}*!*{0}", v.Local.sEmailListCheck(v.Local.iCnt).trim, v.Local.sOneEmail(0).trim,v.Local.sReceipients)
+	F.Intrinsic.Control.EndIf
+f.Intrinsic.Control.Next(v.Local.iCnt)
+
+'Log Report
+f.Intrinsic.String.Build("Generating attachment - {0} - Form: {1}",v.Global.sLabelQuote,v.Screen.Form!ddlQuote.Text,v.Local.sHold)
+f.Intrinsic.UI.ChangeWaitStatus(v.Local.sHold)
+f.Intrinsic.Control.CallSub(log_report)
+
+'Save Attachment
+f.Intrinsic.String.Build("Saving attachment to {0}\Quotes",v.Caller.FilesDir,v.Local.sHold)
+f.Intrinsic.UI.ChangeWaitStatus(v.Local.sHold)
+f.Intrinsic.String.Format(v.Ambient.Date,"YYMMDD",v.Local.sDate)
+f.Intrinsic.String.Format(v.Ambient.Now,"HhNnSs",v.Local.sTime)
+
+',V.Global.sQuote,v.Screen.Form!ddlQuote.Text.left8,v.Local.sDate,v.Local.sTime,
+F.Intrinsic.String.Build("{0}\Quotes\",v.Caller.FilesDir,V.Local.sAttach2)
+F.Intrinsic.String.Build("{4}{0}_{1}_{2}_{3}.pdf",V.Global.sQuote,v.Screen.Form!ddlQuote.Text.left8,v.Local.sDate,v.Local.sTime,v.Local.sattach2,V.Local.sAttach)
+F.Intrinsic.String.Build("{0}_{1}_{2}_{3}.pdf",V.Global.sQuote,v.Screen.Form!ddlQuote.Text.left8,v.Local.sDate,v.Local.sTime,V.Local.sAttachname)
+
+
+v.Local..BulkDeclareString(sParams,sVal,sUserName,sUserEmail)
+F.Intrinsic.String.Split(v.Global.sParmeters,"*!*",v.Local.sParams)
+F.Intrinsic.String.Split(v.Global.sValue,"*!*",v.Local.sVal)
+F.Global.BI.SaveReport(v.Global.iReportID,1,v.Local.sParams,v.Local.sVal,v.Local.sAttach)
+
+'Email
+f.Intrinsic.String.Build("Email to {0}",v.Local.sEmailList,v.Local.sHold)
+f.Intrinsic.UI.ChangeWaitStatus(v.Local.sHold)
+
+F.Global.Security.GetFullName(V.Caller.User,V.Local.sUserName)
+F.Global.Security.GetUserEmail(V.Caller.User,V.Local.sUserEmail)
+
+F.Global.Security.GetUserID(v.Caller.User,v.Caller.CompanyCode,v.Local.iUserID)
+f.Intrinsic.String.Build("{0}*!*{1}",v.Local.sUserEmail,v.Local.sUserName,v.Local.sSenderEmailSenderName)
+
+f.Intrinsic.String.Build("{0}*!*{1}",v.Local.sattachname,v.Local.sattach2,v.Local.sattach)
+
+'F.Global.Messaging.CreateEMMessage(v.Local.sEmailList,"",V.Local.sUserEmail,V.Local.sUserName,v.Screen.Form!txtSubject.Text,V.Screen.Form!txtBody.Text,mkubasta@kennedyind.com,False)
+'F.Global.Messaging.QueueMessage(v.Caller.CompanyCode,v.Local.iUserID,
+
+'(sCoCode, iUserID, CallingPrgm, Subject, SenderEmail*!*sSenderName, Recipients, Body)
+
+Function.Global.Messaging.QueueMessage(v.Caller.CompanyCode,v.Local.iUserID,v.Caller.Caller,v.Screen.Form!txtSubject.Text,V.Local.sSenderEmailSenderName,v.Local.sReceipients,V.Screen.Form!txtBody.Text, -1,"" ,False,"","","","","","","",V.Local.sAttach,False)
+
+f.Intrinsic.UI.CloseWaitDialog
+
+f.Intrinsic.Control.CallSub(form_unload)
+
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("cmdEmail_Click_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4745_Print_Email_QTE.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.cmdEmail_Click.End
+
+Program.Sub.Log_Report.Start
+F.Intrinsic.Control.SetErrorHandler("Log_Report_Err")
+F.Intrinsic.Control.ClearErrors
+
+'Feed BI_Laser_Quote
+F.Global.General.CallWrapperSyncBIO(920000,v.Global.sQuote)
+
+'Base on selection, set the according Report file name and get the Report ID
+v.Global.sSelectedReport.Set("ER_QuoteFormLaser.rpt")
+
+F.Intrinsic.Control.SelectCase(V.Screen.Form!ddlQuote.Text)
+	F.Intrinsic.Control.Case("Q ND     Detailed - No Discount")
+		V.Global.sSelectedReport.Set("ER_QuoteFormLaserKEN_text.rpt")
+	F.Intrinsic.Control.Case("Q S_WT   Summary - With Total")
+		V.Global.sSelectedReport.Set("ER_QuoteFormLaserSummaryKEN.rpt")
+	F.Intrinsic.Control.Case("Q NT     Summary - No Total")
+		V.Global.sSelectedReport.Set("ER_QuoteFormLaserSummaryNoTotalKEN.rpt")
+	F.Intrinsic.Control.Case("Q NPN    Detailed - No Discount - NO Part Number")
+		V.Global.sSelectedReport.Set("ER_QuoteFormLaserNoDiscountNoPartNumberKEN.rpt")
+	F.Intrinsic.Control.Case("Q D_Dez  Detailed - Dezurik")
+		V.Global.sSelectedReport.Set("ER_QuoteFormLaserDetiledDezurikKEN.rpt")
+	F.Intrinsic.Control.Case("Q D_Dez2 Detailed - No Discount - NO Part Number - Dezurik")
+		V.Global.sSelectedReport.Set("ER_QuoteFormLaserNoDiscountNoPartNumberDezurikKEN.rpt")
+	F.Intrinsic.Control.Case("Q S_Dez  Summary - Dezurik")	
+		V.Global.sSelectedReport.Set("ER_QuoteFormLaserSummaryDezurikKEN.rpt")
+	F.Intrinsic.Control.Case("B NP     Detailed - No Discount")
+		V.Global.sSelectedReport.Set("ER_BudgetaryFormLaserKEN_text.rpt")
+	F.Intrinsic.Control.Case("B S_WT   Summary - With Total")
+		V.Global.sSelectedReport.Set("ER_BudgetaryFormLaserSummaryKEN.rpt")
+	F.Intrinsic.Control.Case("B S_NT   Summary - No Total")
+		V.Global.sSelectedReport.Set("ER_BudgetaryFormLaserSummaryNoTotalKEN.rpt")
+	F.Intrinsic.Control.Case("B NPN    Detailed - No Discount - NO Part Number")
+		V.Global.sSelectedReport.Set("ER_BudgetaryFormLaserNoDiscountNoPartNumberKEN.rpt")
+	F.Intrinsic.Control.Case("B D_Dez  Detailed - Dezurik")
+		V.Global.sSelectedReport.Set("ER_BudgetaryFormLaserDetiledDezurikKEN.rpt")
+	F.Intrinsic.Control.Case("B D_Dez2 Detailed - No Discount - NO Part Number - Dezurik")
+		V.Global.sSelectedReport.Set("ER_BudgetaryFormLaserNoDiscountNoPartNumberDezurikKEN.rpt")
+	F.Intrinsic.Control.Case("B S_Dez  Summary - Dezurik")
+		V.Global.sSelectedReport.Set("ER_BudgetaryFormLaserSummaryDezurikKEN.rpt")
+	F.Intrinsic.Control.CaseElse
+		F.Intrinsic.UI.Msgbox("Report not set up. Talk to IT")
+		F.Intrinsic.Control.End
+
+F.Intrinsic.Control.EndSelect
+
+F.Global.BI.GetIDFromName(V.Global.sSelectedReport, V.Global.iReportID)
+
+'Log Report
+F.Global.BI.GetRunID(V.Global.iRunID)
+F.Global.BI.StartLogging(V.Global.iRunID,V.Global.iReportID,-1,V.Global.sSelectedReport,V.Global.iLogID)
+'Set Parameters base on Report file
+'
+'F.Intrinsic.Control.SelectCase(V.Global.sSelectedReport)
+'	F.Intrinsic.Control.Case("ER_QuoteFormLaserKEN.rpt")
+'		V.Global.sParmeters.Set("Terminal*!*REPORTID*!*PRTEXT*!*PRTTOT")
+'		F.Intrinsic.String.Build("{0}*!*{1}*!* *!* ",V.Caller.Terminal, "000001",V.Global.sValue)
+'	F.Intrinsic.Control.Case("ER_QuoteFormLaserSummaryKEN WATERMARK TEST.rpt")
+'		V.Global.sParmeters.Set("Terminal*!*REPORTID*!*PRTEXT*!*PRTTOT*!*Preview")
+'		F.Intrinsic.String.Build("{0}*!*{1}*!* *!* *!*{2}",V.Caller.Terminal, "000001","1", V.Global.sValue)
+'	F.Intrinsic.Control.CaseElse
+'		V.Global.sParmeters.Set("Terminal*!*REPORTID*!*PRTEXT*!*PRTTOT*!*REV*!*PRTALL")
+'		F.Intrinsic.String.Build("{0}*!*{1}*!* *!* *!* *!* ",V.Caller.Terminal, "000001",V.Global.sValue)
+'F.Intrinsic.Control.EndSelect
+
+F.Intrinsic.Control.If(V.Global.sSelectedReport,"=","ER_QuoteFormLaserKEN.rpt")
+	V.Global.sParmeters.Set("Terminal*!*REPORTID*!*PRTEXT*!*PRTTOT")
+	F.Intrinsic.String.Build("{0}*!*{1}*!* *!* ",V.Caller.Terminal, "000001",V.Global.sValue)
+F.Intrinsic.Control.ElseIf(V.Global.sSelectedReport,"=","ER_QuoteFormLaserSummaryKEN WATERMARK TEST.rpt")
+	V.Global.sParmeters.Set("Terminal*!*REPORTID*!*PRTEXT*!*PRTTOT*!*Preview")
+	F.Intrinsic.String.Build("{0}*!*{1}*!* *!* *!*{2}",V.Caller.Terminal, "000001","1", V.Global.sValue)
+F.Intrinsic.Control.Else
+	V.Global.sParmeters.Set("Terminal*!*REPORTID*!*PRTEXT*!*PRTTOT")
+	F.Intrinsic.String.Build("{0}*!*{1}*!* *!* ",V.Caller.Terminal, "000001",V.Global.sValue)
+F.Intrinsic.Control.EndIf
+
+F.Global.BI.StopLogging(V.Global.iLogID)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Log_Report_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4745_Print_Email_QTE.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Log_Report.End
+Program.Sub.cmdEmpBrowser_Click.Start
+v.Local..BulkDeclareString(sTitles, sRet, sSql, sEmail)
+v.Local..BulkDeclareLong(iWidths)
+
+V.Local.sSql.set("select Name, Email_Addr from "EMPLOYEE_MSTR" Where Email_Addr <> '' and Email_Addr NOT Like '0000000000000000000%'")
+F.Intrinsic.String.Split("Name*!*Email Address", "*!*", v.Local.sTitles)
+F.Intrinsic.String.Split("3000*!*5000", "*!*", v.Local.iWidths)
+F.Intrinsic.UI.Browser("Select Email Address", "conx", v.Local.sSql, v.Local.sTitles, v.Local.iWidths, v.Local.sRet)
+Function.Intrinsic.Control.If(Variable.Local.sRet,"=","***CANCEL***")
+	F.Intrinsic.Control.ExitSub
+Function.Intrinsic.Control.EndIf
+
+Function.Intrinsic.String.Split(Variable.Local.sRet,"*!*",Variable.Local.sRet)
+v.Local.sEmail.Set(v.Screen.Form!txtAddress.text)
+f.Intrinsic.Control.If(v.Local.sEmail.Trim, !=, "")
+	F.Intrinsic.String.Build("{0}, {1}",v.Local.sEmail, v.Local.sRet(1).trim, v.Local.sEmail)
+F.Intrinsic.Control.Else
+	v.Local.sEmail.Set(v.Local.sRet(1).trim)
+F.Intrinsic.Control.EndIf
+Gui.Form.txtAddress.Text(v.Local.sEmail.Trim)
+
+
+
+Program.Sub.cmdEmpBrowser_Click.End
+
+
+
+Program.Sub.Comments.Start
+${$0$}$$}$$}$10/19/2017 3:19:18 PM$}$False
+Program.Sub.Comments.End
